@@ -1,0 +1,36 @@
+# Arquivos do Windows
+*.Zone.Identifier
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Arquivos de configuração local
+.claude/
+*.local.*
+
+# Logs
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.cache/
+
+# Credenciais e chaves (segurança)
+*.key
+*.pem
+.env
+config.local.*
+credentials.*
+
+# Backups
+*.bak
+*.backup
+
+# Arquivos de sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes

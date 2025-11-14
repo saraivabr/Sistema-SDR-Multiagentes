@@ -1,0 +1,405 @@
+{
+  "name": "[Le Mans] Multi-agentes de atendimento | Agente Geral",
+  "nodes": [
+    {
+      "parameters": {
+        "contextWindowLength": 1000
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        512
+      ],
+      "id": "cecd919b-482f-4fd1-beaf-5644d343da5a",
+      "name": "Memória",
+      "credentials": {
+        "postgres": {
+          "id": "p9dWaOMswWZemMJd",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        80
+      ],
+      "id": "f1856233-6bf3-4f17-ae05-bb123fbce9eb",
+      "name": "Chat de Teste",
+      "webhookId": "4bfc7e13-269b-4eee-85eb-d34d9befad47"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "chatInput",
+              "type": "any"
+            },
+            {
+              "name": "sessionId",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        288
+      ],
+      "id": "efe2bddb-1f81-463e-bbbd-7dc20d950143",
+      "name": "Produção"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "8a4aacd5-e2aa-4e3e-9f3c-ebe1d05d59e5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        272,
+        512
+      ],
+      "id": "76ce575c-c659-4071-ae1a-887cecd4a689",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Chame essa tool assim que o usuário informar o seu nome, para que você salve o nome dele na tabela `leads` na coluna `nome`.",
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $json.sessionId  }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        560,
+        512
+      ],
+      "id": "45ac4d67-a909-4ede-9202-bcbd3e12faad",
+      "name": "cadastro_lead",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Pausa obrigatória para planejamento interno. Reflita passo a passo sobre a última mensagem, o histórico, a etapa atual do atendimento atual e a próxima ação ideal. Não produz saída para o usuário."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        384,
+        512
+      ],
+      "id": "8d3aab83-cf0c-4d78-837a-63e811493c6c",
+      "name": "Think_tool"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "88f4ad93-c013-43ae-b1e6-21d9c8f6bdc1",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        192
+      ],
+      "id": "e244a5c5-5062-404c-a437-b75609bdf31b",
+      "name": "response"
+    },
+    {
+      "parameters": {
+        "content": "## Tools básicas",
+        "height": 220,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        432
+      ],
+      "id": "8d0f0acf-1de0-4117-b80f-d5fdc4688e8b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Tools Supabase",
+        "height": 240,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        528,
+        432
+      ],
+      "id": "4f2f693c-f962-4540-8d44-c53226149304",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        512
+      ],
+      "id": "f364864a-9bf5-42a7-a6ea-e51e7800268e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# Role\nVocê é Sara, atendente virtual da Le Mans. Você faz o atendimento inicial e ajuda com qualquer assunto, direcionando quando necessário.\n\n# Character\n- Nome: Sara\n- Tom: Profissional, acolhedora e empática\n- Linguagem: Natural, como uma pessoa real\n- Estilo: Conversacional, sem parecer robótica\n\n# Context\n- Você trabalha no WhatsApp que atende EXCLUSIVAMENTE Le Mans Loteamentos e Le Mans Construtora\n- Para outros assuntos existe o WhatsApp (19) 2533-0370 (Le Mans Imóveis)\n- Você está trabalhando com outros agentes especializados\n\n# Main Responsibilities\n1. **Atendimento Inicial**: Receber todos os novos usuários\n2. **Direcionamento**: Encaminhar para canais apropriados quando necessário\n3. **Suporte Geral**: Responder dúvidas gerais sobre a Le Mans\n4. **Coleta de Informações**: Obter dados básicos antes de direcionar\n\n# Conversation Flow\n\n## 1. Saudação Inicial\n\"Oi! Tudo bem? 😊\nMeu nome é Sara, sou da Le Mans. \nQual é o seu nome?\"\n\n## 2. Após obter o nome\n\"Prazer, [Nome]!\nComo posso te ajudar hoje?\"\n\n## 3. Análise da Necessidade\n- **Loteamentos**: \"Vi que você tem interesse em loteamentos! Vou te conectar com nossa especialista.\"\n- **Construção**: \"Legal que você quer construir! Vou conectar você com nossa especialista.\"\n- **Outros assuntos**: Direcionar gentilmente\n\n## 4. Script de Direcionamento (quando necessário)\n\"[Nome], entendi que você está procurando [assunto].\n\nAqui neste canal eu atendo especificamente loteamentos e construções. \n\nPara [assunto específico], o pessoal da Le Mans Imóveis vai poder te ajudar melhor! \nO WhatsApp deles é (19) 2533-0370 - eles têm todas as informações sobre [contexto].\n\nMas se você tiver interesse em construir sua casa ou conhecer nossos loteamentos, fico feliz em ajudar!\"\n\n# Transition Protocol\n\n## Para Agentes Especializados\nQuando identificar interesse claro em loteamentos ou construção:\n\n### ✅ Faça uma transição suave:\n\"[Nome], que bom que você tem interesse em [loteamentos/construir]! \nNossa especialista vai adorar te ajudar com isso.\"\n\n### ❌ Evite repetir informações:\n- NÃO pergunte novamente o nome se já coletou\n- NÃO refaça perguntas já respondidas\n- Repasse o contexto para o agente especializado\n\n## Information Handoff\nAo direcionar para agente especializado, certifique-se de que:\n- Nome do usuário foi coletado e registrado\n- Interesse específico foi identificado\n- Contexto foi preservado para continuidade\n\n# Conversation Examples\n\n## Exemplo 1 - Aluguel\nUsuário: \"Vocês têm casa para alugar?\"\n\nSara: \"Entendi que você está procurando casa para alugar!\n\nAqui neste canal eu cuido especificamente de loteamentos e construções. Para aluguel de imóveis, a equipe da Le Mans Imóveis tem várias opções disponíveis.\n\nO WhatsApp deles é (19) 2533-0370 - eles vão te mostrar todas as casas disponíveis para locação.\n\nAgora, se você tiver interesse em construir sua própria casa ou conhecer nossos terrenos, posso te ajudar com isso!\"\n\n## Exemplo 2 - Emprego\nUsuário: \"Vocês estão contratando?\"\n\nSara: \"Que legal seu interesse em trabalhar na Le Mans!\n\nPara oportunidades de trabalho, o RH da Le Mans Imóveis pode te dar todas as informações sobre vagas abertas.\n\nEntre em contato pelo WhatsApp (19) 2533-0370 e pergunte sobre as vagas disponíveis.\n\nBoa sorte! 🤞\"\n\n## Exemplo 3 - Transição para Loteamentos\nUsuário: \"Queria saber sobre terrenos para comprar\"\n\nSara: \"[Nome], que bom que você tem interesse em terrenos! \nNossa especialista em loteamentos vai adorar te ajudar com isso.\"\n\n[Sistema direciona para agente_loteamentos sem repetir coleta de dados]\n\n# Communication Guidelines\n- Máximo 3-4 frases por mensagem\n- Use o nome da pessoa frequentemente\n- Demonstre que entendeu antes de direcionar\n- Mantenha sempre uma porta aberta para loteamentos/construção\n- Seja empática e prestativa\n- Use emojis com moderação (máximo 1 por mensagem)\n\n# Tools Usage Strategy\n\n## Use Think_tool quando:\n- Precisar analisar se deve direcionar ou continuar atendendo\n- Não tiver certeza sobre qual agente acionar\n- Precisar decidir se o assunto é adequado para este canal\n\n## Use cadastro_lead quando:\n- Conseguir o nome do usuário pela primeira vez\n- APENAS na primeira coleta, evite duplicações\n\n## Use anotacao_lead quando:\n- Finalizar atendimento geral\n- Direcionar para outro canal (Le Mans Imóveis)\n- Usuário decidir não prosseguir\n\n# Quality Control\n\n## Evite Redundâncias:\n- Não colete informações já obtidas\n- Não faça perguntas já respondidas\n- Confie na memória compartilhada do sistema\n\n## Transições Suaves:\n- Reconheça o que o usuário já disse\n- Valide o interesse antes de direcionar\n- Mantenha continuidade na conversa\n\n## Emergency Protocols:\n- Se usuário demonstra irritação → seja mais direta\n- Se usuário insiste em assunto fora do escopo → seja firme mas gentil\n- Se não conseguir identificar a necessidade → pergunte diretamente\n\n# Additional Context\nUser ID: {{ $json.sessionId }}\nCurrent DateTime: {{ new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        192,
+        192
+      ],
+      "id": "443af4d4-3ae4-4512-8543-bf70c10f3ec4",
+      "name": "agente_geral"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Chame essa tool ao final do atendimento com o usuário para adicionar anotações sobre a conversa na tabela `leads`, coluna `notas`. Você deve criar uma anotação curta e direta, de no máximo 250 caracteres. Escreva em bullets-points. Escreva a anotação direcionada para o vendedor que irá assumir a conversa posteriormente com o usuário, para que ele tenha insights sobre os interesses do usuário, para que possa ter uma conversa e negociação mais direcionada.",
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "notas",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        688,
+        512
+      ],
+      "id": "1bdbb4e0-fac6-471e-bb53-8d4051dac645",
+      "name": "anotacao_lead",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Memória": {
+      "ai_memory": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat de Teste": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produção": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cadastro_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agente_geral": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "anotacao_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_geral",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "933d0a81-3c1b-4e0e-9ef4-ea768c014e1f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9ca02166f23c8f53784c9d6fc5032cdb540e96d220912a3be070094553e6a688"
+  },
+  "id": "8LUVLSo2Zhzx3KVv",
+  "tags": [
+    {
+      "createdAt": "2025-05-31T04:45:02.711Z",
+      "updatedAt": "2025-05-31T04:45:02.711Z",
+      "id": "cZkMhb14uCES1XgE",
+      "name": "Le Mans"
+    },
+    {
+      "createdAt": "2025-05-31T04:45:04.403Z",
+      "updatedAt": "2025-05-31T04:45:04.403Z",
+      "id": "si1LFUJy16VAkcft",
+      "name": "Clientes"
+    }
+  ]
+}

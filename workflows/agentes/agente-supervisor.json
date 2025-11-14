@@ -1,0 +1,781 @@
+{
+  "name": "[Le Mans] Multi-agentes de atendimento | Agente Supervisor",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        112
+      ],
+      "id": "e315c02b-ec87-4126-821e-cb70260d867f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        448
+      ],
+      "id": "cc069eb3-6c77-4350-9c34-9448afb8a9cd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 1000
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        448
+      ],
+      "id": "b7c3ad31-1aa1-4132-a4a9-d8369ec0872f",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "p9dWaOMswWZemMJd",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Pausa obrigatória para planejamento interno. Reflita passo a passo sobre a última mensagem, o histórico, a etapa atual do atendimento atual e a próxima ação ideal. Não produz saída para o usuário."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        560,
+        448
+      ],
+      "id": "f4b3e65c-52df-4625-ad09-fe071661aafe",
+      "name": "Think_tool"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "sessionId",
+              "type": "any"
+            },
+            {
+              "name": "chatInput",
+              "type": "any"
+            },
+            {
+              "name": "instancia",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "a3ad272d-2850-4c4a-9d20-724dc24caffa",
+      "name": "Produção"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.messages",
+        "options": {
+          "destinationFieldName": "output"
+        }
+      },
+      "id": "71e1a7c9-2dc9-4e16-bb09-615df4a669b1",
+      "name": "Segmentos",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1.2
+      },
+      "id": "f11a2441-9486-4abb-a50f-bcc2fd149bd8",
+      "name": "1,2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        -16
+      ],
+      "webhookId": "d551975b-aca4-4a73-ae4c-76ee0c3ba5e0"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('ENV').first().json.instancia }}",
+        "remoteJid": "={{ $('ENV').first().json.sessionId }}",
+        "messageText": "={{ $json.output }}",
+        "options_message": {
+          "delay": 1200,
+          "linkPreview": false
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        -16
+      ],
+      "id": "5d52a98a-3093-4707-9e0e-a542f87cd8bd",
+      "name": "Enviar mensagem",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "evolutionApi": {
+          "id": "QbHyXV5Y88So5N2X",
+          "name": "Evolution API - Demo - Mutup"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        128
+      ],
+      "id": "c1ceb575-28f8-4487-85b8-196606605ee4",
+      "name": "ENV"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a8f26267-315e-4ded-bfb8-6f7c2fae1ed4",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1744,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## LLM + Memory + Think",
+        "height": 280,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        208,
+        320
+      ],
+      "id": "370ebca9-5e2a-4cea-a3ee-c24fd577e0ab",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Tools",
+        "height": 280,
+        "width": 680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        704,
+        320
+      ],
+      "id": "be51079c-f639-4409-a355-d9b603e37f31",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        -48
+      ],
+      "id": "b1f67caf-723a-4b25-a274-3e62d097f894",
+      "name": "Chat Manual",
+      "webhookId": "dcbbb56b-19df-47c2-b38f-6c64c34cc051"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# Role\nVocê é o Agente Supervisor do sistema de atendimento Le Mans via WhatsApp. Sua função é receber mensagens e direcioná-las para o agente apropriado.\n\n# Core Function\nRouter inteligente que analisa contexto e direciona para o agente correto, garantindo continuidade e qualidade no atendimento.\n\n# Context\n- Este WhatsApp atende: Le Mans Loteamentos, Le Mans Construtora e Follow-up de Leads\n- Outros assuntos são direcionados para (19) 2533-0370\n- Todos os agentes compartilham a mesma memória PostgreSQL\n\n# Decision Process\n\n## 1. Análise Obrigatória\nSEMPRE use `Think_tool` seguindo estes passos:\n1. Verificar se é conversa nova ou continuação\n2. Identificar o agente anterior (se houver)\n3. Analisar contexto na memória (especialmente follow-up)\n4. Analisar o intent da mensagem atual\n5. Considerar o contexto completo\n6. Decidir o melhor agente\n\n## 2. Regras de Roteamento (ORDEM DE PRIORIDADE)\n\n### 1ª PRIORIDADE: Nova Conversa → agente_geral\n- Primeira mensagem do usuário\n- Sem histórico na memória\n- Saudações iniciais (\"oi\", \"olá\", \"bom dia\")\n\n### 2ª PRIORIDADE: Continuação → Manter mesmo agente\n- Se já existe agente atendendo (exceto follow-up)\n- Se o tópico continua o mesmo\n- Exceto se houver mudança clara de assunto\n\n### 3ª PRIORIDADE: Interesse Específico\n#### Loteamentos → agente_loteamentos\n- \"quero comprar terreno\"\n- \"loteamentos disponíveis\"\n- \"condições de pagamento lote\"\n- Perguntas específicas sobre loteamentos\n\n#### Construção → agente_construtora\n- \"quero construir\"\n- \"orçamento de obra\"\n- \"projeto personalizado\"\n- Perguntas sobre construção\n\n### 4ª PRIORIDADE: Outros Assuntos → agente_geral\n- Aluguel, venda de imóveis prontos\n- Vagas de emprego\n- Informações gerais\n- Qualquer dúvida fora de loteamentos/construção/follow-up\n\n## 3. Identificação de Contexto Follow-up\n\n### Sinais na Memória:\n- Mensagem anterior enviada por agente_followup\n- Lead classificado como \"arquivado\" anteriormente\n- Menção a contato anterior ou canal de origem\n\n### Palavras-chave do usuário:\n- Referências a contato anterior\n- Menção a corretores específicos\n- Resposta a pergunta sobre atendimento\n- Continuação de conversa de follow-up\n\n# Error Handling Protocol\n\n## Regras de Fallback\n1. Se QUALQUER dúvida sobre roteamento → agente_geral\n2. Se nenhum agente responder em 5s → agente_geral\n3. Se houver erro ao chamar agente → agente_geral\n4. Se classificação for ambígua → agente_geral\n5. **EXCEÇÃO**: Se há contexto claro de follow-up → agente_followup\n\n## Ordem de Prioridade\n1. Tentar agente follow-up (se contexto apropriado)\n2. Tentar agente específico apropriado\n3. Em caso de falha → agente_geral (sempre disponível)\n4. NUNCA deixar usuário sem resposta\n\n# Critical Rules\n- Use `Think_tool` SEMPRE antes de decidir\n- Analise TODO o contexto (mensagem + histórico)\n- Priorize continuidade sobre nova classificação\n- Em caso de dúvida → agente_geral (exceto follow-up)\n- Mantenha o processo invisível ao usuário\n- NUNCA exponha seu pensamento ou troca entre agentes para o usuário final\n\n# Tools\n- Think_tool (obrigatório antes de cada decisão)\n- agente_geral (fallback sempre disponível)\n- agente_loteamentos\n- agente_construtora\n\n# Context Variables\nUser: {{ $json.sessionId }}\nMessage: {{ $json.chatInput }}\nInstance: {{ $json.instancia }}\nDateTime: {{ new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) }}\n\n{{ $json.contextString }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        672,
+        112
+      ],
+      "id": "e73013d3-5ed9-424c-a7b8-97cc7e539b76",
+      "name": "Supervisor"
+    },
+    {
+      "parameters": {
+        "description": "## 2. Agente de Loteamentos (`agente_loteamentos`)\n### Função:\nEste agente é responsável por seguir o atendimento e qualificação caso o usuário tenha interesse em loteamentos da Le Mans.\n\n### Quando usar:\n- Quando ficou clara o interesse dele em saber mais sobre loteamentos.\n- Quando o usuário quiser perguntar ou tirar alguma dúvida sobre loteamentos.\n\n### Quando não usar:\n- Quando o usuário já foi pré-atendido.\n- Quando ele tiver interesse em outras áreas da Le Mans, como imóveis ou então construção, mas não demonstrar nenhum interesse em loteamentos.\n- Ele não faz atendimento e qualificação de outros assuntos que não seja sobre loteamentos.",
+        "workflowId": {
+          "__rl": true,
+          "value": "isj3gPoBRwDxr7Z4",
+          "mode": "list",
+          "cachedResultName": "[Le Mans] Multi-agentes de atendimento | Agente Loteamentos"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chatInput": "={{ $json.chatInput }}",
+            "sessionId": "={{ $json.sessionId }}",
+            "instancia": "={{ $json.instancia }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chatInput",
+              "displayName": "chatInput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "instancia",
+              "displayName": "instancia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        400
+      ],
+      "id": "4ffba27f-7c15-4c53-b47e-1e5f79c62d45",
+      "name": "agente_loteamentos"
+    },
+    {
+      "parameters": {
+        "description": "## 3. Agente de Construção (`agente_construtora`)\n### Função:\nEste agente é responsáel por seguir o atendimento e qualificação caso o usuário tenha interesse em construções da Le Mans.\n\n### Quando usar:\n- Quando ficou clara o interesse dele em saber mais sobre a Le Mans Construtora.\n- Quando o usuário quiser perguntar ou tirar alguma dúvida sobre construções.\n- Quando o usuário demonstrar interesse em querer fazer algum projeto personalizado de construção.\n\n\n### Quando não usar:\n- Quando o usuário já foi pré-atendido.\n- Quando ele tiver interesse em outras áreas da Le Mans, como imóveis ou então loteamentos, mas não demonstrar nenhum interesse em desenvolver projetos de construção.\n- Ele não faz atendimento e qualificação de outros assuntos que não seja sobre construções.",
+        "workflowId": {
+          "__rl": true,
+          "value": "0bNiByrrQMEcRvm4",
+          "mode": "list",
+          "cachedResultName": "[Le Mans] Construtora"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chatInput": "={{ $json.chatInput }}",
+            "sessionId": "={{ $json.sessionId }}",
+            "instancia": "={{ $json.instancia }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chatInput",
+              "displayName": "chatInput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "instancia",
+              "displayName": "instancia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        400
+      ],
+      "id": "dccdeb4a-4dd6-48f5-85cf-4381bc203c72",
+      "name": "agente_construtora"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Preparar Contexto\"\nconst sessionId = $input.first().json.sessionId;\nconst chatInput = $input.first().json.chatInput;\nconst instancia = $input.first().json.instancia;\n\n// Inicializar contexto padrão\nlet contextInfo = {\n  isNewConversation: true,\n  lastAgent: 'none',\n  userIntent: 'undefined',\n  userName: 'não informado'\n};\n\n// Como não temos acesso direto ao PostgreSQL aqui,\n// vamos passar essas informações para o Agent usar\n// A memória do chat já está sendo gerenciada pelo Postgres Chat Memory\n\nreturn {\n  sessionId,\n  chatInput,\n  instancia,\n  contextInfo,\n  contextString: `\n    Contexto da Conversa:\n    - Nova conversa: ${contextInfo.isNewConversation}\n    - Agente anterior: ${contextInfo.lastAgent}\n    - Intent: ${contextInfo.userIntent}\n    - Nome do usuário: ${contextInfo.userName}\n  `\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        128
+      ],
+      "id": "3a262ca6-6886-4aae-a082-817016a82544",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Processar Output\"\nconst output = $input.first().json.output;\nconst sessionId = $input.first().json.sessionId;\n\n// Extrair informações do output para logging\nlet agentUsed = 'agente_geral';\nlet userIntent = 'outros';\n\n// Detectar qual agente foi chamado baseado no output\nif (output && typeof output === 'string') {\n  if (output.includes('loteamento')) {\n    agentUsed = 'agente_loteamentos';\n    userIntent = 'loteamentos';\n  } else if (output.includes('construção') || output.includes('construir')) {\n    agentUsed = 'agente_construtora';\n    userIntent = 'construcao';\n  }\n}\n\nconsole.log(`Agente usado: ${agentUsed}, Intent: ${userIntent}`);\n\nreturn {\n  ...$input.first().json,\n  agentUsed,\n  userIntent\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        112
+      ],
+      "id": "4e181c10-de06-4223-8d66-ae1de8a9c85a",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "content": "# Responder usuário no WhatsApp",
+        "height": 420,
+        "width": 1280,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -160
+      ],
+      "id": "3e4b0231-6b5e-40a9-83f4-d8910f882316",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "description": "=## 1. Agente Geral (`agente_geral`)\n### Função:\nAtendimento inicial e direcionamento para assuntos fora de loteamentos/construção.\n\n### Quando usar:\n- Primeira mensagem (conversa nova)\n- Intenção não clara\n- Qualquer assunto que NÃO seja loteamentos ou construção\n- Quando precisar direcionar para outro WhatsApp\n\n### Especialidades:\n- Coleta informações iniciais (nome)\n- Direciona para Le Mans Imóveis quando necessário\n- Responde dúvidas gerais sobre a Le Mans\n- Fallback para qualquer erro",
+        "workflowId": {
+          "__rl": true,
+          "value": "8LUVLSo2Zhzx3KVv",
+          "mode": "list",
+          "cachedResultName": "[Le Mans] Multi-agentes de atendimento | Agente Geral"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chatInput": "={{ $json.chatInput }}",
+            "sessionId": "={{ $json.sessionId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "chatInput",
+              "displayName": "chatInput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        400
+      ],
+      "id": "04ff2e48-ebf0-4a28-a2d2-72ec99ad62cb",
+      "name": "agente_geral"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Whatsapp message to be splitted and formated: {{ $json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Por favor, gere a saída no seguinte formato JSON:\n{\n  \"messages\": [\n    \"splitedMessage\",\n    \"splitedMessage\",\n    \"splitedMessage\"\n  ]\n}\n\nAs mensagens devem ser divididas de forma natural, afinal estamos conversando com um humano, não é mesmo?\n\nCertifique-se de que a resposta siga exatamente essa estrutura, incluindo os colchetes e as aspas.\n\n### Jamais separe uma mensagem vazia.\n\n### Certifique-se de que a resposta siga exatamente essa estrutura abaixo, deixando somente entre '*' para negrito e nunca fugindo das demais regras de markdown do whatsapp:\n\t\t\t- *negrito* (substitua '**' por '*')\n\t\t\t- ~tachado~ (caso seja um preço de promoção)\n\t\t\t- _itálico_.(extremamente raro)\n            - `link` (usar sempre em todos os links)\n\nTudo o que for link, pode colocar entre \"`\", ou seja, na seguinte formatação: `www.link.com.br`\n"
+            }
+          ]
+        }
+      },
+      "id": "964088ea-3778-41af-9bca-3c425f8bf85c",
+      "name": "Parser  Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1184,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"messages\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\"messages\"]\n}"
+      },
+      "id": "9253d7d9-4c42-4a9d-8193-6a846eece02e",
+      "name": "OutputParser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        144
+      ],
+      "id": "b00218fc-88c7-4adb-a2af-62f13448c24f",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Produção": [
+      {
+        "json": {
+          "sessionId": "5511972572348",
+          "chatInput": "Entendi. Obrigado, vou entrar em contato",
+          "instancia": "Le Mans"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produção": {
+      "main": [
+        [
+          {
+            "node": "ENV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segmentos": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1,2s": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar mensagem": {
+      "main": [
+        [
+          {
+            "node": "1,2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENV": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Enviar mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Manual": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agente_loteamentos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agente_construtora": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agente_geral": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OutputParser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser  Chain": {
+      "main": [
+        [
+          {
+            "node": "Segmentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6a688734-f57a-4388-9afe-e7be70d611a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9ca02166f23c8f53784c9d6fc5032cdb540e96d220912a3be070094553e6a688"
+  },
+  "id": "IbPaWpcPpEoL3j2Z",
+  "tags": [
+    {
+      "createdAt": "2025-05-31T04:45:02.711Z",
+      "updatedAt": "2025-05-31T04:45:02.711Z",
+      "id": "cZkMhb14uCES1XgE",
+      "name": "Le Mans"
+    },
+    {
+      "createdAt": "2025-05-31T04:45:04.403Z",
+      "updatedAt": "2025-05-31T04:45:04.403Z",
+      "id": "si1LFUJy16VAkcft",
+      "name": "Clientes"
+    },
+    {
+      "createdAt": "2025-06-06T17:17:50.862Z",
+      "updatedAt": "2025-06-06T17:43:33.466Z",
+      "id": "ZRRqFYqPBLFCmH8u",
+      "name": "AI Agent"
+    }
+  ]
+}

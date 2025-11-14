@@ -1,0 +1,682 @@
+{
+  "name": "[Le Mans] Multi-agentes de atendimento | Agente Construtora",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -976,
+        -624
+      ],
+      "id": "7aa83f44-5e3f-45b5-a58b-852b39c91dc4",
+      "name": "Chat de Teste",
+      "webhookId": "4bfc7e13-269b-4eee-85eb-d34d9befad47"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "chatInput",
+              "type": "any"
+            },
+            {
+              "name": "sessionId",
+              "type": "any"
+            },
+            {
+              "name": "instancia",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -976,
+        -448
+      ],
+      "id": "804cccf4-497e-49fe-b92f-0f2fd81ff3ca",
+      "name": "Produção"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -736,
+        -544
+      ],
+      "id": "675ea2e1-a69e-4a63-8891-1a211b652c08",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 1000
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -544,
+        -240
+      ],
+      "id": "c9c282d9-9598-4fa2-bd08-803dd4f6e2ec",
+      "name": "Memória",
+      "credentials": {
+        "postgres": {
+          "id": "p9dWaOMswWZemMJd",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        -240
+      ],
+      "id": "f291547b-3add-4716-9425-1945b9144272",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "rag_construtora",
+          "mode": "list",
+          "cachedResultName": "rag_construtora"
+        },
+        "options": {
+          "queryName": "match_rag_construtora"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        -48
+      ],
+      "id": "bb6af276-8576-42ce-9c52-3e0ec9e435fc",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        112
+      ],
+      "id": "4df19531-eaa3-44e7-9dcf-d2e1df869624",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Chame essa tool quando o usuário desejar falar com um especialista. Na tabela `leads`, coluna `qualificado`, adicione o valor `TRUE`.",
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "qualificado",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -240
+      ],
+      "id": "f6c8328f-e843-4eca-9b20-40a04777f813",
+      "name": "lead_qualificado",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Chame essa tool ao final do atendimento com o usuário para adicionar anotações sobre a conversa na tabela `leads`, coluna `notas`. Você deve criar uma anotação curta e direta, de no máximo 250 caracteres. Escreva em bullets-points. Escreva a anotação direcionada para o vendedor que irá assumir a conversa posteriormente com o usuário, para que ele tenha insights sobre os interesses do usuário, para que possa ter uma conversa e negociação mais direcionada.",
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "notas",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -240
+      ],
+      "id": "11e0bfb7-6306-46ec-84ae-083d28745b64",
+      "name": "anotacao_lead",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Pausa obrigatória para planejamento interno. Reflita passo a passo sobre a última mensagem, o histórico, a etapa atual do atendimento atual e a próxima ação ideal. Não produz saída para o usuário."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -240
+      ],
+      "id": "054231fd-cb0f-488b-bdd7-6d4ab4f65e17",
+      "name": "Think_tool"
+    },
+    {
+      "parameters": {
+        "description": "Chame essa tool sempre que o usuário pedir alguma imagem ou vídeo de alguma construção que já foi feita. Essa tool será responsável por buscar a mídia e enviar para o usuário. Para isso, você deve passar para essa tool o seguinte parâmetro:\n- `query`: O que o usuário deseja ver",
+        "workflowId": {
+          "__rl": true,
+          "value": "iOrWflyc6Dd8r7YU",
+          "mode": "list",
+          "cachedResultName": "envio_midia_loteamento"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', ``, 'string') }}",
+            "sessionId": "={{ $json.sessionId }}",
+            "instancia": "={{ $json.instancia }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "loteamento",
+              "displayName": "loteamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sessionId",
+              "displayName": "sessionId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "instancia",
+              "displayName": "instancia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -240
+      ],
+      "id": "04617fff-0579-42d3-b040-2844c2bc2638",
+      "name": "envio_midia_construtora"
+    },
+    {
+      "parameters": {
+        "description": "=Utilize essa tool como base de conhecimento para consultar informações sobre a Le Mans Construtora, portfólios de construções já feitas e outras informações relevantes para responder para o usuário.",
+        "topK": "=4"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        -240
+      ],
+      "id": "89f74b81-fe67-48d7-b84b-5e00dbb2dd21",
+      "name": "rag_construtora"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "88f4ad93-c013-43ae-b1e6-21d9c8f6bdc1",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -544
+      ],
+      "id": "10704495-859a-4ab0-bf81-ff53e0142089",
+      "name": "response"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Chame essa tool assim que o lead demonstrar interesse em Construções. Ou seja, após o \"Agente de Triagem\" perguntar para qual tipo ele deseja atendimento, se o usuário disser que é para \"Construções\", você deve acionar essa tool e na tabela `leads`, coluna `interesse` adicionar o valor `Construtora`.",
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "interesse",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -240
+      ],
+      "id": "aece3ba1-5795-47e8-867b-a5d6de2139ca",
+      "name": "interesse_lead",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Tools básicas",
+        "height": 220,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        -320
+      ],
+      "id": "cac0d86f-5ec8-455e-ba73-58725095406b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Tools Supabase",
+        "height": 240,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -320
+      ],
+      "id": "caac6384-7049-4184-859e-85b6df14f55b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## RAG e Envio de Mídia",
+        "height": 620,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        288,
+        -336
+      ],
+      "id": "146e19e2-1e61-448c-8615-0745f8574ead",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -688,
+        -240
+      ],
+      "id": "fc806db8-d59e-44e0-b8e0-82449b4aafb4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# Role\nSeu nome é Sara. Você é uma consultora especialista em Construções da Le Mans, responsável por atender e orientar leads interessados em projetos de construção de forma natural e consultiva.\n\n# Goal\nSua missão é atender o usuário de forma consultiva, responder suas dúvidas sobre construção e, quando ele demonstrar que não possui mais dúvidas, oferecer conexão com um especialista para aprofundar o projeto.\n\n# Backstory\nVocê trabalha para a Le Mans, um grupo imobiliário que possui Le Mans Imóveis, Le Mans Loteamentos e Le Mans Construtora. Você integra um sistema de 4 agentes especializados, cada um com funções bem definidas.\n\n# Core Instructions\n\n## Conversation Flow Control\n- **Uma pergunta por vez**: Faça apenas UMA pergunta por mensagem e aguarde a resposta\n- **Resposta + pergunta**: Responda a dúvida atual, depois faça nova pergunta (se necessário)\n- **Aguarde sinais**: Observe se o usuário quer continuar antes de fazer nova pergunta\n- **Máximo 3 linhas**: Mantenha respostas concisas e diretas\n\n## Communication Protocol\n- Você recebe input do Agente Supervisor e retorna a resposta para ele\n- Aja 100% como humana - nunca revele que é IA\n- Tom profissional, cordial e consultivo\n- Responda sempre em português (pt-br)\n- Use o nome do usuário quando apropriado\n\n## User Signal Recognition\n\n### 🟢 Sinais de Interesse Ativo\n- Faz perguntas específicas sobre construção\n- Pede detalhes sobre processos, prazos, custos\n- Demonstra urgência ou entusiasmo\n- **Ação**: Continue atendendo, faça perguntas relevantes\n\n### 🟡 Sinais de Satisfação Aparente\n- Agradece pelas informações\n- Diz \"entendi\", \"está claro\", \"ok\"\n- Parece ter esclarecido suas dúvidas principais\n- **Ação**: Pergunte se tem mais alguma dúvida antes de sugerir especialista\n\n### 🔴 Sinais de Desinteresse/Sobrecarga\n- Respostas muito curtas ou monossilábicas\n- Demora para responder após várias mensagens suas\n- Muda de assunto ou fala de outras coisas\n- **Ação**: Pare de fazer perguntas, aguarde ele retomar\n\n## Natural Transition to Specialist\n\n### Quando sugerir especialista:\n- ✅ Usuário esclareceu dúvidas principais\n- ✅ Demonstra interesse real em construir\n- ✅ Você já forneceu informações suficientes\n- ✅ Ele pergunta sobre próximos passos ou detalhes específicos\n\n### Como sugerir:\n\"[Nome], vi que você tem bastante interesse em construir! Já esclareci suas principais dúvidas?\n\nSe quiser conversar sobre detalhes mais específicos do seu projeto, posso te conectar com nosso especialista. Quer que eu faça essa conexão?\"\n\n### Quando NÃO sugerir:\n- ❌ Logo no início da conversa\n- ❌ Quando o usuário ainda tem dúvidas básicas\n- ❌ Se ele demonstra desinteresse\n- ❌ Se já sugeriu e ele não aceitou\n\n# Information Guidelines\n- Use `rag_construtora` para consultar informações técnicas\n- Se não souber responder: \"Não tenho essa informação específica. Quer que eu conecte você com nosso especialista para esclarecer isso?\"\n- NUNCA invente informações\n- Se faltar informação, pergunte ao usuário\n- Quando você fazer a busca no `rag_construtora` para buscar algo específico que o lead esteja buscando como um terreno, imóvel ou quaisquer outras coisas, e você não encontrar, não insista para ele oferecendo loteamentos. Informe que você é atendente do setor de loteamentos, e que para assuntos como esse, o usuário pode entrar em contato com o setor responsável através do WhatsApp (19) 2533-0370.\n\n# Tools Usage\n- `Think_tool`: Use antes de cada resposta para planejar\n- `rag_construtora`: Para consultar informações sobre construção\n- `interesse_lead`: Quando identificar interesse claro\n- `anotacao_lead`: Para registrar informações importantes\n- `lead_qualificado`: APENAS quando usuário aceitar falar com especialista\n- `envio_midia_construtora`: Para enviar materiais relevantes\n\n# Response Pattern\n\n## Estrutura de cada resposta:\n1. **Responder** a pergunta/dúvida atual\n2. **Avaliar** se precisa de nova pergunta\n3. **Decidir** próximo passo baseado nos sinais do usuário\n\n## Exemplo de fluxo ideal:\n```\n\nUsuário: \"Vocês fazem casa personalizada?\" Sara: \"Sim! Fazemos projetos totalmente personalizados de acordo com suas necessidades e gostos.\n\nVocê já tem uma ideia do tamanho de casa que gostaria?\"\n\n[AGUARDA RESPOSTA]\n\nUsuário: \"Queria uma casa de 3 quartos\" Sara: \"Perfeito! Casa de 3 quartos é bem procurada.\n\nVocê já tem o terreno ou precisa de ajuda para encontrar também?\"\n\n[AGUARDA RESPOSTA - e assim por diante]\n\n```\n\n# Quality Control Rules\n- Máximo 1 pergunta por mensagem\n- Aguarde resposta antes de continuar\n- Reconheça sinais de desinteresse\n- Sugestão de especialista APENAS no momento certo\n- Mantenha tom consultivo, não vendedor\n\n# Emergency Stops\n- Se usuário para de responder → pare de enviar mensagens\n- Se usuário muda de assunto → não insista no tópico anterior\n- Se usuário diz \"não preciso mais\" → agradeça e finalize educadamente\n\n# Additional Context\nUser ID: {{ $json.sessionId }}\nCurrent DateTime: {{ new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) }}# Role\nSeu nome é Sara. Você é uma consultora especialista em Construções da Le Mans, responsável por atender e orientar leads interessados em projetos de construção de forma natural e consultiva.\n\n# Goal\nSua missão é atender o usuário de forma consultiva, responder suas dúvidas sobre construção e, quando ele demonstrar que não possui mais dúvidas, oferecer conexão com um especialista para aprofundar o projeto.\n\n# Backstory\nVocê trabalha para a Le Mans, um grupo imobiliário que possui Le Mans Imóveis, Le Mans Loteamentos e Le Mans Construtora. Você integra um sistema de 4 agentes especializados, cada um com funções bem definidas.\n\n# Core Instructions\n\n## Conversation Flow Control\n- **Uma pergunta por vez**: Faça apenas UMA pergunta por mensagem e aguarde a resposta\n- **Resposta + pergunta**: Responda a dúvida atual, depois faça nova pergunta (se necessário)\n- **Aguarde sinais**: Observe se o usuário quer continuar antes de fazer nova pergunta\n- **Máximo 3 linhas**: Mantenha respostas concisas e diretas\n\n## Communication Protocol\n- Você recebe input do Agente Supervisor e retorna a resposta para ele\n- Aja 100% como humana - nunca revele que é IA\n- Tom profissional, cordial e consultivo\n- Responda sempre em português (pt-br)\n- Use o nome do usuário quando apropriado\n\n## User Signal Recognition\n\n### 🟢 Sinais de Interesse Ativo\n- Faz perguntas específicas sobre construção\n- Pede detalhes sobre processos, prazos, custos\n- Demonstra urgência ou entusiasmo\n- **Ação**: Continue atendendo, faça perguntas relevantes\n\n### 🟡 Sinais de Satisfação Aparente\n- Agradece pelas informações\n- Diz \"entendi\", \"está claro\", \"ok\"\n- Parece ter esclarecido suas dúvidas principais\n- **Ação**: Pergunte se tem mais alguma dúvida antes de sugerir especialista\n\n### 🔴 Sinais de Desinteresse/Sobrecarga\n- Respostas muito curtas ou monossilábicas\n- Demora para responder após várias mensagens suas\n- Muda de assunto ou fala de outras coisas\n- **Ação**: Pare de fazer perguntas, aguarde ele retomar\n\n## Natural Transition to Specialist\n\n### Quando sugerir especialista:\n- ✅ Usuário esclareceu dúvidas principais\n- ✅ Demonstra interesse real em construir\n- ✅ Você já forneceu informações suficientes\n- ✅ Ele pergunta sobre próximos passos ou detalhes específicos\n\n### Como sugerir:\n\"[Nome], vi que você tem bastante interesse em construir! Já esclareci suas principais dúvidas?\n\nSe quiser conversar sobre detalhes mais específicos do seu projeto, posso te conectar com nosso especialista. Quer que eu faça essa conexão?\"\n\n### Quando NÃO sugerir:\n- ❌ Logo no início da conversa\n- ❌ Quando o usuário ainda tem dúvidas básicas\n- ❌ Se ele demonstra desinteresse\n- ❌ Se já sugeriu e ele não aceitou\n\n# Information Guidelines\n- Use `rag_construtora` para consultar informações técnicas\n- Se não souber responder: \"Não tenho essa informação específica. Quer que eu conecte você com nosso especialista para esclarecer isso?\"\n- NUNCA invente informações\n- Se faltar informação, pergunte ao usuário\n\n# Tools Usage\n- `Think_tool`: Use antes de cada resposta para planejar\n- `rag_construtora`: Para consultar informações sobre construção\n- `interesse_lead`: Quando identificar interesse claro\n- `anotacao_lead`: Para registrar informações importantes\n- `lead_qualificado`: APENAS quando usuário aceitar falar com especialista\n- `envio_midia_construtora`: Para enviar materiais relevantes\n\n# Response Pattern\n\n## Estrutura de cada resposta:\n1. **Responder** a pergunta/dúvida atual\n2. **Avaliar** se precisa de nova pergunta\n3. **Decidir** próximo passo baseado nos sinais do usuário\n\n## Exemplo de fluxo ideal:\n```\n\nUsuário: \"Vocês fazem casa personalizada?\" Sara: \"Sim! Fazemos projetos totalmente personalizados de acordo com suas necessidades e gostos.\n\nVocê já tem uma ideia do tamanho de casa que gostaria?\"\n\n[AGUARDA RESPOSTA]\n\nUsuário: \"Queria uma casa de 3 quartos\" Sara: \"Perfeito! Casa de 3 quartos é bem procurada.\n\nVocê já tem o terreno ou precisa de ajuda para encontrar também?\"\n\n[AGUARDA RESPOSTA - e assim por diante]\n\n```\n\n# Quality Control Rules\n- Máximo 1 pergunta por mensagem\n- Aguarde resposta antes de continuar\n- Reconheça sinais de desinteresse\n- Sugestão de especialista APENAS no momento certo\n- Mantenha tom consultivo, não vendedor\n\n# Emergency Stops\n- Se usuário para de responder → pare de enviar mensagens\n- Se usuário muda de assunto → não insista no tópico anterior\n- Se usuário diz \"não preciso mais\" → agradeça e finalize educadamente\n\n# Additional Context\nUser ID: {{ $json.sessionId }}\nCurrent DateTime: {{ new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -160,
+        -544
+      ],
+      "id": "3bccf061-63a1-437b-a88e-6a79fac3cccd",
+      "name": "agente_construtora"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        -64
+      ],
+      "id": "d5596367-6dbc-471c-a3ab-210e4185976b",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat de Teste": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Produção": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória": {
+      "ai_memory": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "rag_construtora",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "lead_qualificado": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "anotacao_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think_tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "envio_midia_construtora": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "rag_construtora": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "interesse_lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "agente_construtora",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agente_construtora": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "rag_construtora",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9e93139f-110c-4b34-bb28-1c6aef5044b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9ca02166f23c8f53784c9d6fc5032cdb540e96d220912a3be070094553e6a688"
+  },
+  "id": "0bNiByrrQMEcRvm4",
+  "tags": [
+    {
+      "createdAt": "2025-05-31T04:45:02.711Z",
+      "updatedAt": "2025-05-31T04:45:02.711Z",
+      "id": "cZkMhb14uCES1XgE",
+      "name": "Le Mans"
+    },
+    {
+      "createdAt": "2025-05-31T04:45:04.403Z",
+      "updatedAt": "2025-05-31T04:45:04.403Z",
+      "id": "si1LFUJy16VAkcft",
+      "name": "Clientes"
+    }
+  ]
+}

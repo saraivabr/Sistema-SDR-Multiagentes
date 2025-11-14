@@ -1,0 +1,759 @@
+{
+  "name": "envio_midia_construtora",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query",
+              "type": "any"
+            },
+            {
+              "name": "sessionId",
+              "type": "any"
+            },
+            {
+              "name": "instancia",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "id": "0a0a03ee-8e3d-4c7c-ab44-9064b41b9fdb",
+      "typeVersion": 1.1,
+      "name": "envio_midia",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -1504,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1248,
+        624
+      ],
+      "id": "5dc364b8-cdd3-47e2-9ebd-5c488584d45f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "6SsEv0WNEQRmc3gi",
+          "name": "DeepSeek - Mutup"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "=Esta ferramenta acessa a base de dados 'rag_construtora' para encontrar o documento específico que contém os links de mídia dos portfólios das construções da Le Mans Construtora.\nPara usar corretamente:\n1. A query de busca por similaridade (texto principal) pode ser a solicitação original do usuário, mas o mais importante são os filtros.",
+        "topK": "=20"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        -944,
+        640
+      ],
+      "id": "78a91bb5-7bc2-47f2-a35f-11e091785383",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "rag_construtora",
+          "mode": "list",
+          "cachedResultName": "rag_construtora"
+        },
+        "options": {
+          "queryName": "match_rag_construtora"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -1040,
+        832
+      ],
+      "id": "c0c1c6c5-97cc-43ae-adc1-7bf41dbf8d16",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -960,
+        1024
+      ],
+      "id": "eec20499-16d0-4b3c-adea-abcc2f61b091",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -752,
+        832
+      ],
+      "id": "ead83d74-e8ad-40a4-b5fe-02f6d1a33bd5",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"tipo_de_midia\": \"Descrição concisa do tipo de mídia que você selecionou com base na query (ex: Imagens da maquete do Terra Nova, Vídeo institucional do Bela Vida, Fotos diversas do Aurora)\",\n  \"links\": [\"url_limpa_e_filtrada_1\", \"url_limpa_e_filtrada_2\", \"url_limpa_e_filtrada_3\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -640,
+        624
+      ],
+      "id": "18186cbd-65e4-4e06-a49b-36fd04495d64",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Sua missão é identificar e extrair links de mídias relevantes (imagens, vídeos do YouTube, etc.) dos portfólios de construções da Le Mans Construtora. Você receberá como entrada uma 'query'.\n\nSiga estes passos rigorosamente:\n\n1.  **Utilize a ferramenta `Answer questions with a vector store`** para localizar o ÚNICO documento na base `rag_construtora` que contém o compilado de mídias dos portfólios.\n\n2.  **Processe o Resultado:** A ferramenta retornará um documento. Dentro dele, acesse `metadata.links`. Este é um array de strings, onde cada string é um link, podendo conter um prefixo \"- \" e um comentário descritivo após \"#\".\n\n3.  **Limpe os Links:** Para cada string no array `metadata.links`:\n    * Remova o prefixo \"- \" se presente.\n    * Extraia a URL principal, descartando qualquer comentário após o caractere \"#\".\n\n4.  **Filtre os Links Limpos:** Com base na `query` original do usuário (ex: \"vídeo\", \"maquete\", \"fotos da fachada\", \"imagens da área de lazer\"), selecione APENAS os links que são diretamente relevantes para essa solicitação.\n    * Se a `query` pedir \"vídeo\", retorne apenas links de vídeo.\n    * Se a `query` pedir \"fotos da piscina\", procure por links cujos comentários originais (a parte após '#') ou nomes de arquivo sugiram que são da piscina.\n    * Se a `query` for genérica como \"fotos\" ou \"imagens\", selecione uma variedade de até 5 links de imagem.\n    * Se a `query` for \"todas as mídias\", selecione uma variedade de até 5 links mistos (imagens e vídeos).\n\n5. Você deve retornar no máximo 5 links de mídia, entre fotos e vídeos."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -944,
+        416
+      ],
+      "id": "0e6e2534-3e04-4158-b4c7-6828f0567075",
+      "name": "Agente buscador de mídia"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        416
+      ],
+      "id": "4803cb37-c211-4cd6-ac02-c0392cdedd2c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assume que 'links' veio do input anterior, por exemplo, `item.json.links`\nconst links = $json.output.links || [];\nconst tipo_de_midia = $json.tipo_de_midia;\n\n// Cria um item para cada link\nreturn links.map(link => ({\n  json: {\n    link,\n    tipo_de_midia // Caso queira manter outros dados relevantes do item original\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        416
+      ],
+      "id": "2e9f59d0-3c6d-420e-a394-bda09b74d97d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": ".png",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    },
+                    "id": "a43fd04a-a8ee-4f71-bbd8-0e68ac15b771"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PNG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7224b4da-1494-4671-b45d-f8e90f5c544c",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": ".jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JPG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "74a85870-6ceb-425f-9949-4b602d856b49",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": ".jpeg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JPEG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1195044e-97d6-491c-8756-bab2da4339a8",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": "youtube",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "YouTube"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7346ddd3-3116-492a-b04e-a29166f934cf",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": "youtu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "YouTube"
+            }
+          ]
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        0,
+        368
+      ],
+      "id": "de34a1e7-3e5b-4acb-8d33-fd1c89a59e88",
+      "name": "Verifica se é imagem ou vídeo"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-image",
+        "instanceName": "={{$('ENV.midias').first().json.instancia}}",
+        "remoteJid": "={{$('ENV.midias').first().json.sessionId}}",
+        "media": "={{ $json.data }}",
+        "options_message": {
+          "delay": 1200
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        672,
+        304
+      ],
+      "id": "35c04a62-3b07-4ebb-b4ca-393a47a0357f",
+      "name": "Enviar imagem",
+      "retryOnFail": true,
+      "credentials": {
+        "evolutionApi": {
+          "id": "QbHyXV5Y88So5N2X",
+          "name": "Evolution API - Demo - Mutup"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('ENV.midias').first().json.instancia }}",
+        "remoteJid": "={{ $('ENV.midias').first().json.sessionId }}",
+        "messageText": "={{ $json.link }}",
+        "options_message": {
+          "delay": 1200
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        672,
+        512
+      ],
+      "id": "2151cfe8-e138-4706-ae05-4e851afb2174",
+      "name": "Enviar link do vídeo",
+      "retryOnFail": true,
+      "credentials": {
+        "evolutionApi": {
+          "id": "QbHyXV5Y88So5N2X",
+          "name": "Evolution API - Demo - Mutup"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        304
+      ],
+      "id": "1152d981-45f7-4aff-87c8-29bebd0436ef",
+      "name": "Baixar imagem"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        448,
+        304
+      ],
+      "id": "b3aacd5d-d07c-42fc-af4f-25741cc5e0b9",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "amount": 1.2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        512
+      ],
+      "id": "eb8e37a0-eb75-4c17-abaf-375b4b0fce6b",
+      "name": "Wait",
+      "webhookId": "6b845db0-8f48-4439-b3cf-23d7faaf2569"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4344e74b-90fd-4123-bf95-016510902dc5",
+              "name": "response",
+              "value": "=Foi enviado para o usuário as imagens ou vídeos sobre a construção. Agora continue a conversa com ele.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        160
+      ],
+      "id": "3db5de9b-82cf-4d9d-ae9a-ca1a44e60031",
+      "name": "response"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1280,
+        416
+      ],
+      "id": "2f19d7e5-077f-4e9b-8909-4f50ef3021fa",
+      "name": "ENV.midias"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        624
+      ],
+      "id": "569fdae6-e74d-433e-9b35-60c6d17ffdce",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "o7bIQTSpM3y3nKdu",
+          "name": "DeepSeek account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "envio_midia": {
+      "main": [
+        [
+          {
+            "node": "ENV.midias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente buscador de mídia": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Verifica se é imagem ou vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica se é imagem ou vídeo": {
+      "main": [
+        [
+          {
+            "node": "Baixar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baixar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baixar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar link do vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar link do vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar imagem": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar link do vídeo": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar imagem": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Enviar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENV.midias": {
+      "main": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2ddf807d-86d6-4b37-b662-bd35b2216b1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9ca02166f23c8f53784c9d6fc5032cdb540e96d220912a3be070094553e6a688"
+  },
+  "id": "UwjUicN0y36uETkw",
+  "tags": [
+    {
+      "createdAt": "2025-05-31T04:45:02.711Z",
+      "updatedAt": "2025-05-31T04:45:02.711Z",
+      "id": "cZkMhb14uCES1XgE",
+      "name": "Le Mans"
+    },
+    {
+      "createdAt": "2025-05-31T04:45:04.403Z",
+      "updatedAt": "2025-05-31T04:45:04.403Z",
+      "id": "si1LFUJy16VAkcft",
+      "name": "Clientes"
+    },
+    {
+      "createdAt": "2025-06-01T17:11:34.258Z",
+      "updatedAt": "2025-06-01T17:11:34.258Z",
+      "id": "X0MYn7vRVZtJOSsT",
+      "name": "Tools"
+    }
+  ]
+}

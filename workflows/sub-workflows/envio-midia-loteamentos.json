@@ -1,0 +1,774 @@
+{
+  "name": "envio_midia_loteamento",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query",
+              "type": "any"
+            },
+            {
+              "name": "loteamento",
+              "type": "any"
+            },
+            {
+              "name": "sessionId",
+              "type": "any"
+            },
+            {
+              "name": "instancia",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "id": "8a7f5690-6fa3-4b40-870b-ea16b40657a7",
+      "typeVersion": 1.1,
+      "name": "envio_midia",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -960,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        432
+      ],
+      "id": "a210f78c-8967-4e1d-a053-26395fab862e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Esta ferramenta acessa a base de dados 'rag_loteamentos' para encontrar o documento específico que contém os links de mídia para um determinado loteamento.\nPara usar corretamente:\n1. A query de busca por similaridade (texto principal) pode ser a solicitação original do usuário, mas o mais importante são os filtros.\n2. **OBRIGATORIAMENTE, aplique filtros de metadados para encontrar o documento correto:**\n    - Filtre onde o campo 'content' seja EXATAMENTE igual a 'MÍDIAS'.\n    - Filtre onde o campo 'metadata.loteamento' (ou o nome exato do seu campo de metadados para o nome do loteamento) seja EXATAMENTE igual ao nome do loteamento solicitado (ex: 'bela-vida').\nA ferramenta retornará o(s) documento(s) correspondente(s). Os links de mídia estarão em um array dentro de 'metadata.links' do documento encontrado.",
+        "topK": "=20"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        432
+      ],
+      "id": "f5a04900-85eb-4274-a20c-4132a9617ab6",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "rag_loteamentos",
+          "mode": "list",
+          "cachedResultName": "rag_loteamentos"
+        },
+        "options": {
+          "queryName": "match_rag_loteamentos"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -512,
+        640
+      ],
+      "id": "39156271-9046-469c-829e-5f9e4af51cb0",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MF4gdCEORzfGbZXI",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        832
+      ],
+      "id": "bd68c475-7947-4b86-bb95-fe14fe6f3405",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        624
+      ],
+      "id": "23e35c74-3dbf-43f5-befe-f0861b704e9c",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "VwtqktnexzMQCkvM",
+          "name": "Le Mans"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"tipo_de_midia\": \"Descrição concisa do tipo de mídia que você selecionou com base na query (ex: Imagens da maquete do Terra Nova, Vídeo institucional do Bela Vida, Fotos diversas do Aurora)\",\n  \"links\": [\"url_limpa_e_filtrada_1\", \"url_limpa_e_filtrada_2\", \"url_limpa_e_filtrada_3\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        432
+      ],
+      "id": "e1ed822a-80fb-401d-a7df-b89a63ec4664",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Sua missão é identificar e extrair links de mídias relevantes (imagens, vídeos do YouTube, etc.) para um loteamento específico, baseado na solicitação do usuário. Você receberá como entrada uma 'query' (a solicitação original do usuário, ex: \"fotos da piscina do Terra Nova\") e o nome do 'loteamento' (ex: \"Terra Nova\").\n\nSiga estes passos rigorosamente:\n\n1.  **Utilize a ferramenta `Answer questions with a vector store`** para localizar o ÚNICO documento na base `rag_loteamentos` que contém o compilado de mídias para o `loteamento` fornecido.\n    * Ao chamar a ferramenta, a query de busca por similaridade pode ser a `query` original do usuário.\n    * **CRUCIAL:** Instrua a ferramenta a aplicar os seguintes filtros de metadados combinados (AND):\n        * `content` IGUAL A `'MÍDIAS'`.\n        * `metadata.loteamento` IGUAL A `{{$json.loteamento}}`.\n\n2.  **Processe o Resultado:** A ferramenta retornará um documento. Dentro dele, acesse `metadata.links`. Este é um array de strings, onde cada string é um link, podendo conter um prefixo \"- \" e um comentário descritivo após \"#\".\n\n3.  **Limpe os Links:** Para cada string no array `metadata.links`:\n    * Remova o prefixo \"- \" se presente.\n    * Extraia a URL principal, descartando qualquer comentário após o caractere \"#\".\n\n4.  **Filtre os Links Limpos:** Com base na `query` original do usuário (ex: \"vídeo\", \"maquete\", \"fotos da fachada\", \"imagens da área de lazer\"), selecione APENAS os links que são diretamente relevantes para essa solicitação.\n    * Se a `query` pedir \"vídeo\", retorne apenas links de vídeo.\n    * Se a `query` pedir \"fotos da piscina\", procure por links cujos comentários originais (a parte após '#') ou nomes de arquivo sugiram que são da piscina.\n    * Se a `query` for genérica como \"fotos\" ou \"imagens\", selecione uma variedade de até 5 links de imagem.\n    * Se a `query` for \"todas as mídias\", selecione uma variedade de até 5 links mistos (imagens e vídeos).\n\n5. Você deve retornar no máximo 5 links de mídia, entre fotos e vídeos."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -400,
+        208
+      ],
+      "id": "12603248-2329-419c-ae12-088dfc702dc8",
+      "name": "Agente buscador de mídia"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        320,
+        208
+      ],
+      "id": "90cdfac9-d8fe-498d-8bec-ef1f0d21a81c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assume que 'links' veio do input anterior, por exemplo, `item.json.links`\nconst links = $json.output.links || [];\nconst tipo_de_midia = $json.tipo_de_midia;\n\n// Cria um item para cada link\nreturn links.map(link => ({\n  json: {\n    link,\n    tipo_de_midia // Caso queira manter outros dados relevantes do item original\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        208
+      ],
+      "id": "02ae7a8b-110c-47db-92ab-c8eeffe824ed",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": ".png",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    },
+                    "id": "a43fd04a-a8ee-4f71-bbd8-0e68ac15b771"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PNG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7224b4da-1494-4671-b45d-f8e90f5c544c",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": ".jpg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JPG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "74a85870-6ceb-425f-9949-4b602d856b49",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": ".jpeg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JPEG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1195044e-97d6-491c-8756-bab2da4339a8",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": "youtube",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "YouTube"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7346ddd3-3116-492a-b04e-a29166f934cf",
+                    "leftValue": "={{ $json.link }}",
+                    "rightValue": "youtu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "YouTube"
+            }
+          ]
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        160
+      ],
+      "id": "e109a9fa-4d8c-44b9-ba79-454334075fb8",
+      "name": "Verifica se é imagem ou vídeo"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "operation": "send-image",
+        "instanceName": "={{$('ENV.midias').first().json.instancia}}",
+        "remoteJid": "={{$('ENV.midias').first().json.sessionId}}",
+        "media": "={{ $json.data }}",
+        "options_message": {
+          "delay": 1200
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        112
+      ],
+      "id": "62e89e32-475f-452f-a5d2-6d4d538a4b90",
+      "name": "Enviar imagem",
+      "retryOnFail": true,
+      "credentials": {
+        "evolutionApi": {
+          "id": "QbHyXV5Y88So5N2X",
+          "name": "Evolution API - Demo - Mutup"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('ENV.midias').first().json.instancia }}",
+        "remoteJid": "={{ $('ENV.midias').first().json.sessionId }}",
+        "messageText": "={{ $json.link }}",
+        "options_message": {
+          "delay": 1200
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        304
+      ],
+      "id": "271582e5-2aa5-44d2-90ef-8a821f2c3b86",
+      "name": "Enviar link do vídeo",
+      "retryOnFail": true,
+      "credentials": {
+        "evolutionApi": {
+          "id": "QbHyXV5Y88So5N2X",
+          "name": "Evolution API - Demo - Mutup"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        112
+      ],
+      "id": "350cd626-07cf-4054-b115-6904ef459908",
+      "name": "Baixar imagem"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        976,
+        112
+      ],
+      "id": "67fc9ab5-04de-4028-8982-789466202ce1",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "amount": 1.2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1424,
+        304
+      ],
+      "id": "e2c3c7ad-818d-4e12-a7e9-f49d3f5d4375",
+      "name": "Wait",
+      "webhookId": "6b845db0-8f48-4439-b3cf-23d7faaf2569"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -736,
+        208
+      ],
+      "id": "46fab9a6-b25e-4924-ad23-a56684e72a95",
+      "name": "ENV.midias"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4344e74b-90fd-4123-bf95-016510902dc5",
+              "name": "response",
+              "value": "=Foi enviado para o usuário as imagens ou vídeos sobre o loteamento. Agora continue a conversa com ele.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        -48
+      ],
+      "id": "fae3988a-a857-4750-a8e3-64b79588af5e",
+      "name": "response"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        432
+      ],
+      "id": "b42e0715-c4c7-4475-8661-2b087a25c01f",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "o7bIQTSpM3y3nKdu",
+          "name": "DeepSeek account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "envio_midia": [
+      {
+        "json": {
+          "query": "foto",
+          "loteamento": "Terra Nova",
+          "sessionId": "5511972572348",
+          "instancia": "Demo - Mutup"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "envio_midia": {
+      "main": [
+        [
+          {
+            "node": "ENV.midias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente buscador de mídia": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Verifica se é imagem ou vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica se é imagem ou vídeo": {
+      "main": [
+        [
+          {
+            "node": "Baixar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baixar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baixar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar link do vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar link do vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar imagem": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar link do vídeo": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar imagem": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Enviar imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENV.midias": {
+      "main": [
+        [
+          {
+            "node": "Agente buscador de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0d7bf904-aca3-408a-a2ca-b7538d8691e9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9ca02166f23c8f53784c9d6fc5032cdb540e96d220912a3be070094553e6a688"
+  },
+  "id": "iOrWflyc6Dd8r7YU",
+  "tags": [
+    {
+      "createdAt": "2025-05-31T04:45:02.711Z",
+      "updatedAt": "2025-05-31T04:45:02.711Z",
+      "id": "cZkMhb14uCES1XgE",
+      "name": "Le Mans"
+    },
+    {
+      "createdAt": "2025-05-31T04:45:04.403Z",
+      "updatedAt": "2025-05-31T04:45:04.403Z",
+      "id": "si1LFUJy16VAkcft",
+      "name": "Clientes"
+    },
+    {
+      "createdAt": "2025-06-01T17:11:34.258Z",
+      "updatedAt": "2025-06-01T17:11:34.258Z",
+      "id": "X0MYn7vRVZtJOSsT",
+      "name": "Tools"
+    }
+  ]
+}

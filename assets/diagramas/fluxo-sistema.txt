@@ -1,0 +1,165 @@
+# Diagrama do Fluxo do Sistema SDR Le Mans
+
+## Visão Geral da Arquitetura
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌────────────────────────┐
+│   WhatsApp      │    │  Evolution API   │    │     n8n Workflow       │
+│   (Cliente)     │◄──►│   (Webhook)      │◄──►│   "WhatsApp Sara"      │
+└─────────────────┘    └──────────────────┘    └────────────────────────┘
+                                                           │
+                                                           ▼
+                       ┌─────────────────────────────────────────────────────┐
+                       │            PROCESSAMENTO INICIAL                     │
+                       │  • Classificação de mensagem (texto/áudio/imagem)   │
+                       │  • OCR para documentos                              │
+                       │  • Transcrição de áudio                             │
+                       │  • Buffer de 10 segundos                            │
+                       └─────────────────────────────────────────────────────┘
+                                                           │
+                                                           ▼
+                       ┌─────────────────────────────────────────────────────┐
+                       │              AGENTE SUPERVISOR                       │
+                       │                 (Router)                            │
+                       │                                                     │
+                       │  1. Think Tool (Obrigatório)                       │
+                       │  2. Análise de Contexto                            │
+                       │  3. Decisão de Roteamento                          │
+                       │  4. Fallback para Agente Geral                     │
+                       └─────────────────────────────────────────────────────┘
+                                                           │
+                       ┌───────────────────┬───────────────┼───────────────────┐
+                       ▼                   ▼               ▼                   ▼
+               ┌──────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────┐
+               │    AGENTE    │   │     AGENTE      │   │     AGENTE      │   │   OUTROS    │
+               │    GERAL     │   │  LOTEAMENTOS    │   │  CONSTRUTORA    │   │  AGENTES    │
+               │              │   │                 │   │                 │   │ (FUTUROS)   │
+               │ • Triagem    │   │ • Terrenos      │   │ • Construção    │   │             │
+               │ • Coleta     │   │ • Qualificação  │   │ • Projetos      │   │             │
+               │ • Direciona  │   │ • Apresentação  │   │ • Portfólio     │   │             │
+               └──────────────┘   └─────────────────┘   └─────────────────┘   └─────────────┘
+                       │                   │                       │
+                       ▼                   ▼                       ▼
+               ┌──────────────┐   ┌─────────────────┐   ┌─────────────────┐
+               │    TOOLS     │   │     TOOLS       │   │     TOOLS       │
+               │              │   │                 │   │                 │
+               │• cadastro    │   │• rag_loteamentos│   │• rag_construtora│
+               │• anotacao    │   │• envio_midia_lot│   │• envio_midia_con│
+               │• Think_tool  │   │• interesse_lead │   │• interesse_lead │
+               └──────────────┘   │• lead_qualific. │   │• lead_qualific. │
+                                  │• Think_tool     │   │• Think_tool     │
+                                  └─────────────────┘   └─────────────────┘
+                                           │                       │
+                                           ▼                       ▼
+                                  ┌─────────────────┐   ┌─────────────────┐
+                                  │  SUB-WORKFLOW   │   │  SUB-WORKFLOW   │
+                                  │ Mídia Loteamen. │   │ Mídia Construt. │
+                                  │                 │   │                 │
+                                  │• Vector Search  │   │• Vector Search  │
+                                  │• Filter Links   │   │• Filter Links   │
+                                  │• Clean URLs     │   │• Clean URLs     │
+                                  │• Return Top 5   │   │• Return Top 5   │
+                                  └─────────────────┘   └─────────────────┘
+```
+
+## Fluxo de Dados
+
+### 1. Entrada de Mensagem
+```
+Cliente → WhatsApp → Evolution API → Webhook → n8n
+```
+
+### 2. Processamento Inicial
+```
+Mensagem → Classificação → [Áudio/OCR se necessário] → Buffer 10s → Texto limpo
+```
+
+### 3. Roteamento Inteligente
+```
+Texto → Agente Supervisor → Think Tool → Análise → Decisão → Agente Específico
+```
+
+### 4. Processamento Especializado
+```
+Agente → Tools + RAG → Resposta → Evolution API → WhatsApp → Cliente
+```
+
+## Componentes de Dados
+
+### Banco de Dados PostgreSQL
+```
+┌─────────────────┐
+│  Tabela: leads  │
+├─────────────────┤
+│ • telefone      │ (PK)
+│ • nome          │
+│ • interesse     │
+│ • qualificado   │
+│ • notas         │
+│ • timestamps    │
+└─────────────────┘
+
+┌─────────────────┐
+│ Chat Memory     │
+├─────────────────┤
+│ • session_id    │
+│ • messages      │
+│ • context       │
+└─────────────────┘
+```
+
+### Vector Store (Supabase)
+```
+┌─────────────────┐    ┌─────────────────┐
+│ rag_loteamentos │    │ rag_construtora │
+├─────────────────┤    ├─────────────────┤
+│ • content       │    │ • content       │
+│ • metadata      │    │ • metadata      │
+│   - loteamento  │    │   - categoria   │
+│   - links[]     │    │   - links[]     │
+│ • embeddings    │    │ • embeddings    │
+└─────────────────┘    └─────────────────┘
+```
+
+## Regras de Negócio
+
+### Roteamento (Agente Supervisor)
+```
+1ª Prioridade: Nova conversa        → Agente Geral
+2ª Prioridade: Continuação          → Manter agente atual
+3ª Prioridade: Interesse específico → Agente especializado
+4ª Prioridade: Outros assuntos      → Agente Geral
+```
+
+### Qualificação de Leads
+```
+Agente Geral      → cadastro_lead + anotacao_lead
+Agente Loteamen.  → interesse_lead + lead_qualificado
+Agente Construt.  → interesse_lead + lead_qualificado
+```
+
+### Envio de Mídia
+```
+Solicitação → Sub-workflow → Vector Search → Filtragem → Top 5 links → Cliente
+```
+
+## Pontos de Integração
+
+### APIs Externas
+- **OpenAI API**: GPT-4 para agentes + Embeddings para RAG
+- **Evolution API**: WhatsApp Business integration
+- **Supabase**: Vector store e embeddings search
+
+### Webhooks
+- **Entrada**: Evolution API → n8n workflow principal
+- **Saída**: n8n → Evolution API → WhatsApp
+
+### Fallbacks
+- **Agente indisponível**: → Agente Geral
+- **OpenAI timeout**: → Retry → Agente Geral
+- **RAG sem resultados**: → Direcionamento humano
+- **Erro geral**: → Contato (19) 2533-0370
+
+---
+
+**Nota**: Este diagrama representa o fluxo atual do sistema. Para implementar visualizações gráficas, pode-se usar ferramentas como Mermaid, Lucidchart ou Draw.io com base nesta estrutura.
